@@ -8,6 +8,9 @@ import android.os.Bundle
 import android.provider.Settings
 import android.Manifest
 import android.os.Looper
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -44,13 +47,28 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b?.root)
-        b?.btnRefresh?.setOnClickListener {
-            getCurrentLocation()
-        }
 
         locationManager = checkLocationProviderAvailable()
 
+        //setup actionbar
+        setSupportActionBar(b?.tbMainToolbar)
+
        getCurrentLocation()
+    }
+
+    //add the menu to the actionbar
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_activity_actions, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.action_refresh_location -> {
+                getCurrentLocation()
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun checkLocationProviderAvailable(): FusedLocationProviderClient {
