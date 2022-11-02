@@ -7,11 +7,12 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.Manifest
+import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.*
 import com.nilsnahooy.weatherapp.databinding.ActivityMainBinding
-
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -24,24 +25,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var b: ActivityMainBinding? = null
+    private lateinit var locationManager: FusedLocationProviderClient
+    private var latitude = 0.0
+    private var longitude = 0.0
+
+    private val locationCallback = object : LocationCallback(){
+        override fun onLocationResult(locationResult: LocationResult) {
+            if (locationResult.locations.isNotEmpty()) {
+                val location = locationResult.lastLocation!!
+                latitude = location.latitude
+                longitude = location.longitude
+                b?.tvTemp?.text = "lat: $latitude long: $longitude"
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b?.root)
-
-        checkLocationProviderAvailable()
-
-        if(locationPermissionsGranted()){
-            //Do things
-        } else {
-            ActivityCompat.requestPermissions(this,
-                REQUIRED_PERMISSIONS_LOCATION, REQUEST_CODE_PERMISSIONS)
+        b?.btnRefresh?.setOnClickListener {
+            getCurrentLocation()
         }
 
+        locationManager = checkLocationProviderAvailable()
+
+       getCurrentLocation()
     }
 
-    private fun checkLocationProviderAvailable() {
+    private fun checkLocationProviderAvailable(): FusedLocationProviderClient {
         val lm = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var gpsEnabled = false
         var networkEnabled = false
@@ -60,11 +72,35 @@ class MainActivity : AppCompatActivity() {
         if(!gpsEnabled && !networkEnabled) {
             startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
         }
+        return LocationServices.getFusedLocationProviderClient(this)
     }
 
     private fun locationPermissionsGranted() = REQUIRED_PERMISSIONS_LOCATION.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun getCurrentLocation() {
+        if (locationPermissionsGranted()) {
+            val locationRequest = LocationRequest
+                .Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
+                .setMaxUpdates(1)
+                .build()
+            try {
+                locationManager.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.myLooper()
+                )
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                REQUIRED_PERMISSIONS_LOCATION, REQUEST_CODE_PERMISSIONS
+            )
+        }
     }
 
     override fun onDestroy() {
