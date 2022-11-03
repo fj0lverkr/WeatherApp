@@ -1,22 +1,22 @@
 package com.nilsnahooy.weatherapp
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.Manifest
 import android.net.Uri
 import android.os.Looper
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
+import com.nilsnahooy.weatherapp.Constants.isNetworkEnabled
+import com.nilsnahooy.weatherapp.Constants.setupLocationProvider
 import com.nilsnahooy.weatherapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -26,14 +26,8 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ).toTypedArray()
-        private val REQUIRED_PERMISSIONS_NETWORK =
-            mutableListOf(
-                Manifest.permission.INTERNET,
-                Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.ACCESS_WIFI_STATE
-            ).toTypedArray()
         private const val REQUEST_CODE_LOCATION = 111
-        private const val REQUEST_CODE_NETWORK = 222
+        private const val TAG = "DEV"
     }
 
     private var b: ActivityMainBinding? = null
@@ -48,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 val location = locationResult.lastLocation!!
                 latitude = location.latitude
                 longitude = location.longitude
-                b?.tvTemp?.text = "lat: $latitude long: $longitude"
+                getWeatherInfo()
             }
         }
     }
@@ -58,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b?.root)
 
-        locationManager = checkLocationProviderAvailable()
+        locationManager = setupLocationProvider(this)
 
         //setup actionbar
         setSupportActionBar(b?.tbMainToolbar)
@@ -81,28 +75,8 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun checkLocationProviderAvailable(): FusedLocationProviderClient {
-        val lm = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        var gpsEnabled = false
-        var networkEnabled = false
-        try {
-            gpsEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        try {
-            networkEnabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        if(!gpsEnabled && !networkEnabled) {
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        }
-        return LocationServices.getFusedLocationProviderClient(this)
-    }
-
     private fun getCurrentLocation() {
-        if (permissionsGranted(REQUIRED_PERMISSIONS_LOCATION)) {
+        if (permissionsGranted()) {
             val locationRequest = LocationRequest
                 .Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
                 .setMaxUpdates(1)
@@ -132,22 +106,19 @@ class MainActivity : AppCompatActivity() {
             }
             snack.show()
             //continue in demo mode unless the user has changed the permissions
-            b?.tvTemp?.text = "[DEMO] lat: $latitude long: $longitude"
+            getWeatherInfo()
         }
     }
 
-    private fun setUpNetwork(){
-        if(permissionsGranted(REQUIRED_PERMISSIONS_NETWORK)) {
-
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                REQUIRED_PERMISSIONS_NETWORK, REQUEST_CODE_NETWORK
-            )
-        }
+    private fun getWeatherInfo(){
+       if (isNetworkEnabled(this)) {
+           Log.i(TAG, "getWeatherInfo: Network OK")
+       } else {
+           Log.i(TAG, "getWeatherInfo: Network NOK")
+       }
     }
 
-    private fun permissionsGranted(permissions: Array<String>) = permissions.all {
+    private fun permissionsGranted() = REQUIRED_PERMISSIONS_LOCATION.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
@@ -162,15 +133,6 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     isDemo = true
                     getCurrentLocation()
-                }
-                return
-            }
-            REQUEST_CODE_NETWORK -> {
-                if (gR.isNotEmpty() && gR[0] == PackageManager.PERMISSION_GRANTED) {
-                    setUpNetwork()
-                } else {
-                    Toast.makeText(this, getString(R.string.tst_no_network_permission),
-                        Toast.LENGTH_LONG).show()
                 }
                 return
             }
