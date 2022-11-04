@@ -4,7 +4,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
-import android.Manifest
 import android.net.Uri
 import android.os.Looper
 import android.util.Log
@@ -15,20 +14,23 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
+import com.nilsnahooy.weatherapp.Constants.BASE_URL
+import com.nilsnahooy.weatherapp.Constants.METRIC_UNIT
+import com.nilsnahooy.weatherapp.Constants.REQUEST_CODE_LOCATION
+import com.nilsnahooy.weatherapp.Constants.REQUIRED_PERMISSIONS_LOCATION
+import com.nilsnahooy.weatherapp.Constants.TAG
 import com.nilsnahooy.weatherapp.Constants.isNetworkEnabled
 import com.nilsnahooy.weatherapp.Constants.setupLocationProvider
 import com.nilsnahooy.weatherapp.databinding.ActivityMainBinding
+import com.nilsnahooy.weatherapp.models.WeatherDataResponse
+import com.nilsnahooy.weatherapp.network.WeatherService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        private val REQUIRED_PERMISSIONS_LOCATION =
-            mutableListOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ).toTypedArray()
-        private const val REQUEST_CODE_LOCATION = 111
-        private const val TAG = "DEV"
-    }
 
     private var b: ActivityMainBinding? = null
     private lateinit var locationManager: FusedLocationProviderClient
@@ -112,7 +114,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun getWeatherInfo(){
        if (isNetworkEnabled(this)) {
-           Log.i(TAG, "getWeatherInfo: Network OK")
+           val rf: Retrofit = Retrofit.Builder()
+               .baseUrl(BASE_URL)
+               .addConverterFactory(GsonConverterFactory.create())
+               .build()
+           val service: WeatherService = rf.create(WeatherService::class.java)
+           //to get the app id, create values/secrets.xml containing your app id.
+           val weatherCall = service.getCurrentWeather(latitude, longitude, METRIC_UNIT,
+               getString(R.string.Owm_APi_key))
+           weatherCall.enqueue(object : Callback<WeatherDataResponse>{
+               override fun onResponse(
+                   call: Call<WeatherDataResponse>,
+                   response: Response<WeatherDataResponse>
+               ) {
+                   if(response.isSuccessful){
+                       val weatherData = response.body()
+                       Log.i(TAG, "onResponse: $weatherData")
+                   } else {
+                       Log.e(TAG, "onResponse: response code: ${response.code()}")
+                   }
+               }
+
+               override fun onFailure(call: Call<WeatherDataResponse>, t: Throwable) {
+                   Log.e(TAG, "onFailure: ${t.message.toString()}")
+               }
+
+           })
        } else {
            Log.i(TAG, "getWeatherInfo: Network NOK")
        }

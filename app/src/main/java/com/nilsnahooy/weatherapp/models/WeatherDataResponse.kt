@@ -1,4 +1,6 @@
-package com.nilsnahooy.weatherapp.data
+package com.nilsnahooy.weatherapp.models
+
+import java.io.Serializable
 
 data class WeatherDataResponse(
     val coord: Coordinates,
@@ -15,19 +17,19 @@ data class WeatherDataResponse(
     val id: Int,
     val name: String,
     val cod: Int
-)
+): Serializable
 
 data class Coordinates(
-    val lat: Float,
-    val long: Float
-)
+    val lon: Double,
+    val lat: Double
+): Serializable
 
 data class WeatherDetail(
     val id: Int,
     val main: String,
     val description: String,
     val icon: String
-)
+): Serializable
 
 data class MainData(
     val temp: Double,
@@ -38,21 +40,21 @@ data class MainData(
     val humidity: Int,
     val sea_level: Int,
     val grnd_level: Int
-)
+): Serializable
 
 data class WindData(
     val speed: Double,
     val deg: Int,
     val gust: Double
-)
+): Serializable
 
 data class RainData(
     val h: Double
-)
+): Serializable
 
 data class CloudData(
     val all: Int
-)
+): Serializable
 
 data class SysData(
     val type: Int,
@@ -60,4 +62,4 @@ data class SysData(
     val country: String,
     val sunrise: Int,
     val sunset: Int
-)
+): Serializable

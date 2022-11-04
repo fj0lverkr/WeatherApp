@@ -1,5 +1,6 @@
 package com.nilsnahooy.weatherapp
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
@@ -11,6 +12,17 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
 object Constants {
+    val REQUIRED_PERMISSIONS_LOCATION =
+        mutableListOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ).toTypedArray()
+
+    const val REQUEST_CODE_LOCATION = 111
+    const val TAG = "DEV"
+    const val BASE_URL = "https://api.openweathermap.org/data/"
+    const val METRIC_UNIT = "metric"
+
     fun isNetworkEnabled(context: Context): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE)
                 as ConnectivityManager
