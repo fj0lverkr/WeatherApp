@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
                 val location = locationResult.lastLocation!!
                 latitude = location.latitude
                 longitude = location.longitude
+                //hideProgressDialog()
                 getWeatherInfo()
             }
         }
