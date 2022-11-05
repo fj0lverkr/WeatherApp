@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="pb_width">40dp</dimen>
+    <dimen name="pb_height">40dp</dimen>
+    <dimen name="tv_margin_top">5dp</dimen>
+    <dimen name="dialog_padding">20dp</dimen>
+</resources>

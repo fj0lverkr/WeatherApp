@@ -4,4 +4,6 @@
     <string name="tst_no_network_permission">You\'ve decided to deny access to the network, the app will not be able to get weather data for your location.</string>
     <string name="sb_open_settings_location">This app will run in demo mode without location permissions.</string>
     <string name="sb_settings">Settings</string>
+    <string name="lbl_progress_location">getting location…</string>
+    <string name="lbl_progress_weather">getting weather data…</string>
 </resources>
