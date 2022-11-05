@@ -1,5 +1,6 @@
 package com.nilsnahooy.weatherapp
 
+import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -9,6 +10,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private var latitude = 0.0
     private var longitude = 0.0
     private var isDemo = false
+    private var progressDialog: Dialog? = null
 
     private val locationCallback = object : LocationCallback(){
         override fun onLocationResult(locationResult: LocationResult) {
@@ -79,6 +82,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun getCurrentLocation() {
         if (permissionsGranted()) {
+            showProgressDialog()
+            progressDialog?.findViewById<TextView>(R.id.tv_progress)?.text = getString(
+                R.string.lbl_progress_location
+            )
             val locationRequest = LocationRequest
                 .Builder(Priority.PRIORITY_HIGH_ACCURACY, 0)
                 .setMaxUpdates(1)
@@ -90,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                     Looper.myLooper()
                 )
             } catch (e: SecurityException) {
+                hideProgressDialog()
                 e.printStackTrace()
             }
         } else if (!isDemo) {
@@ -114,6 +122,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun getWeatherInfo(){
        if (isNetworkEnabled(this)) {
+           progressDialog?.findViewById<TextView>(R.id.tv_progress)?.text = getString(
+               R.string.lbl_progress_weather
+           )
            val rf: Retrofit = Retrofit.Builder()
                .baseUrl(BASE_URL)
                .addConverterFactory(GsonConverterFactory.create())
@@ -127,6 +138,7 @@ class MainActivity : AppCompatActivity() {
                    call: Call<WeatherDataResponse>,
                    response: Response<WeatherDataResponse>
                ) {
+                   hideProgressDialog()
                    if(response.isSuccessful){
                        val weatherData = response.body()
                        Log.i(TAG, "onResponse: $weatherData")
@@ -136,11 +148,13 @@ class MainActivity : AppCompatActivity() {
                }
 
                override fun onFailure(call: Call<WeatherDataResponse>, t: Throwable) {
+                   hideProgressDialog()
                    Log.e(TAG, "onFailure: ${t.message.toString()}")
                }
 
            })
        } else {
+           hideProgressDialog()
            Log.i(TAG, "getWeatherInfo: Network NOK")
        }
     }
@@ -165,6 +179,18 @@ class MainActivity : AppCompatActivity() {
             }
             else -> return
         }
+    }
+
+    private fun showProgressDialog() {
+        progressDialog = Dialog(this)
+        progressDialog?.setContentView(R.layout.dialog_progress)
+        progressDialog?.setCancelable(false)
+        progressDialog?.show()
+    }
+
+    private fun hideProgressDialog(){
+        progressDialog?.hide()
+        progressDialog = null
     }
 
     override fun onDestroy() {
