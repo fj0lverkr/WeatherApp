@@ -12,15 +12,19 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
 import com.nilsnahooy.weatherapp.Constants.BASE_URL
+import com.nilsnahooy.weatherapp.Constants.IMPERIAL_UNIT
 import com.nilsnahooy.weatherapp.Constants.METRIC_UNIT
 import com.nilsnahooy.weatherapp.Constants.REQUEST_CODE_LOCATION
 import com.nilsnahooy.weatherapp.Constants.REQUIRED_PERMISSIONS_LOCATION
 import com.nilsnahooy.weatherapp.Constants.TAG
+import com.nilsnahooy.weatherapp.Constants.getWeatherCondition
+import com.nilsnahooy.weatherapp.Constants.getWindCardinal
 import com.nilsnahooy.weatherapp.Constants.isNetworkEnabled
 import com.nilsnahooy.weatherapp.Constants.setupLocationProvider
 import com.nilsnahooy.weatherapp.databinding.ActivityMainBinding
@@ -40,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var longitude = 0.0
     private var isDemo = false
     private var progressDialog: Dialog? = null
+    private var isMetric = true
 
     private val locationCallback = object : LocationCallback(){
         override fun onLocationResult(locationResult: LocationResult) {
@@ -132,7 +137,12 @@ class MainActivity : AppCompatActivity() {
                .build()
            val service: WeatherService = rf.create(WeatherService::class.java)
            //to get the app id, create values/secrets.xml containing your app id.
-           val weatherCall = service.getCurrentWeather(latitude, longitude, METRIC_UNIT,
+           val units = if(isMetric) {
+                METRIC_UNIT
+           } else {
+               IMPERIAL_UNIT
+           }
+           val weatherCall = service.getCurrentWeather(latitude, longitude, units,
                getString(R.string.Owm_APi_key))
            weatherCall.enqueue(object : Callback<WeatherDataResponse>{
                override fun onResponse(
@@ -142,7 +152,9 @@ class MainActivity : AppCompatActivity() {
                    hideProgressDialog()
                    if(response.isSuccessful){
                        val weatherData = response.body()
-                       Log.i(TAG, "onResponse: $weatherData")
+                       if (weatherData != null) {
+                           setupUi(weatherData)
+                       }
                    } else {
                        Log.e(TAG, "onResponse: response code: ${response.code()}")
                    }
@@ -158,6 +170,26 @@ class MainActivity : AppCompatActivity() {
            hideProgressDialog()
            Log.i(TAG, "getWeatherInfo: Network NOK")
        }
+    }
+
+    private fun setupUi(data: WeatherDataResponse){
+        val conditionDrawable = getWeatherCondition(data.weather[0].id)
+        val windCardinal = getWindCardinal(data.wind.deg)
+        b?.ivWeatherType?.setImageDrawable(
+            AppCompatResources.getDrawable(this,conditionDrawable))
+        b?.tvValueWeatherType?.text = data.weather[0].description
+        b?.tvValueHumidity?.text = getString(R.string.plh_humidity, data.main.humidity.toString())
+        b?.tvValueTemperature?.text = if (isMetric){
+            getString(R.string.plh_temp_metric, data.main.temp.toString())
+        } else {
+            getString(R.string.plh_temp_imperial, data.main.temp.toString())
+        }
+        b?.tvValueWind?.text = if(isMetric){
+            getString(R.string.plh_wind_metric, data.wind.speed.toString(), windCardinal)
+        } else {
+            getString(R.string.plh_wind_imperial, data.wind.speed.toString(), windCardinal)
+        }
+        b?.tvValueLocation?.text = getString(R.string.plh_place, data.name, data.sys.country)
     }
 
     private fun permissionsGranted() = REQUIRED_PERMISSIONS_LOCATION.all {

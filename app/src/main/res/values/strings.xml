@@ -6,4 +6,17 @@
     <string name="sb_settings">Settings</string>
     <string name="lbl_progress_location">getting location…</string>
     <string name="lbl_progress_weather">getting weather data…</string>
+    <string name="cd_image">image</string>
+    <string name="miles_per_hour">miles/hour</string>
+    <string name="lbl_precipitation">Precipitation</string>
+    <string name="lbl_humidity">Humidity</string>
+    <string name="lbl_weather_type">Weather</string>
+    <string name="lbl_temperature">Temperature</string>
+    <string name="lbl_wind">Wind</string>
+    <string name="plh_humidity">%1$s%%</string>
+    <string name="plh_temp_metric">%1$s°C</string>
+    <string name="plh_temp_imperial">%1$s°F</string>
+    <string name="plh_wind_metric">%1s m/s - %2$s</string>
+    <string name="plh_wind_imperial">%1s m/h - %2$s</string>
+    <string name="plh_place">%1s, %2$s</string>
 </resources>
